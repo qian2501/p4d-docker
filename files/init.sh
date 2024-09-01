@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Specify UID and GID
+if [ ! -z "${PERFORCE_UID}" ]; then
+  	if [ ! "$(id -u perforce)" -eq "${PERFORCE_UID}" ]; then
+		usermod -o -u "${PERFORCE_UID}" perforce
+	fi
+fi
+
+if [ ! -z "${PERFORCE_GID}" ]; then
+  	if [ ! "$(id -g perforce)" -eq "${PERFORCE_GID}" ]; then
+		groupmod -o -g "${PERFORCE_GID}" perforce
+	fi
+fi
+
 # Setup directories
 mkdir -p "$P4ROOT"
 mkdir -p "$P4DEPOTS"
