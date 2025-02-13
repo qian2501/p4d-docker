@@ -5,8 +5,7 @@ FROM ubuntu:${UBUNTU_VERSION}
 
 ARG UBUNTU_VERSION
 # search for available version at https://package.perforce.com/apt/ubuntu/pool/release/p
-ARG P4_VERSION=2024.1-2625008
-ARG SWARM_VERSION=2024.3-2628402
+ARG P4_VERSION=2024.2-2697822
 
 # Prepare system and add Perforce repo
 RUN apt-get update && \
@@ -17,7 +16,7 @@ RUN apt-get update && \
     echo "deb [signed-by=/usr/share/keyrings/perforce.gpg] https://package.perforce.com/apt/ubuntu ${UBUNTU_VERSION} release" > /etc/apt/sources.list.d/perforce.list
 
 # Install Perforce Server
-RUN apt-get update && apt-get install -y helix-p4d=${P4_VERSION}~${UBUNTU_VERSION} helix-swarm-triggers=${SWARM_VERSION}~${UBUNTU_VERSION}
+RUN apt-get update && apt-get install -y helix-p4d=${P4_VERSION}~${UBUNTU_VERSION}
 
 # Add external files
 COPY files/restore.sh /usr/local/bin/restore.sh
