@@ -5,36 +5,28 @@ FROM ubuntu:${UBUNTU_VERSION}
 
 ARG UBUNTU_VERSION
 # search for available version at https://package.perforce.com/apt/ubuntu/pool/release/p
-ARG P4_VERSION=2024.2-2697822
+ARG P4_VERSION=2024.2-2726408
 
-# Prepare system and add Perforce repo
+# Prepare system and install Perforce Server
 RUN apt-get update && \
     apt-get upgrade -y && \
-    userdel -r ubuntu && \
     apt-get install -y wget gnupg2 && \
+    \
     wget -qO - https://package.perforce.com/perforce.pubkey | gpg --dearmor | tee /usr/share/keyrings/perforce.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/perforce.gpg] https://package.perforce.com/apt/ubuntu ${UBUNTU_VERSION} release" > /etc/apt/sources.list.d/perforce.list
-
-# Install Perforce Server
-RUN apt-get update && apt-get install -y helix-p4d=${P4_VERSION}~${UBUNTU_VERSION}
+    echo "deb [signed-by=/usr/share/keyrings/perforce.gpg] https://package.perforce.com/apt/ubuntu ${UBUNTU_VERSION} release" > /etc/apt/sources.list.d/perforce.list && \
+    apt-get update && \
+    apt-get install -y helix-p4d=${P4_VERSION}~${UBUNTU_VERSION}
 
 # Add external files
-COPY files/restore.sh /usr/local/bin/restore.sh
-COPY files/setup.sh /usr/local/bin/setup.sh
-COPY files/init.sh /usr/local/bin/init.sh
-COPY files/latest_checkpoint.sh /usr/local/bin/latest_checkpoint.sh
-
-RUN chmod +x /usr/local/bin/restore.sh && \
-    chmod +x /usr/local/bin/setup.sh && \
-    chmod +x /usr/local/bin/init.sh && \
-    chmod +x /usr/local/bin/latest_checkpoint.sh
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Defaults
 ARG NAME=perforce-server
 ARG PORT=1666
 ARG P4NAME=main
-ARG P4HOME=/p4
-ARG P4PORT=ssl:1666
+ARG P4ROOT=/p4
+ARG P4PORT=1666
 ARG P4USER=test
 ARG P4PASSWD=password1234
 ARG P4CASE=-C0
@@ -44,7 +36,7 @@ ARG P4SSLDIR=/cert
 # Environment variable
 ENV NAME=$NAME \
     P4NAME=$P4NAME \
-    P4HOME=$P4HOME \
+    P4ROOT=$P4ROOT \
     P4PORT=$P4PORT \
     P4USER=$P4USER \
     P4PASSWD=$P4PASSWD \
@@ -53,16 +45,11 @@ ENV NAME=$NAME \
     P4SSLDIR=$P4SSLDIR \
     JNL_PREFIX=$P4NAME
 
-ENV P4ROOT=$P4HOME/data \
-    P4DEPOTS=$P4HOME/depots \
-    P4CKP=$P4HOME/checkpoints
-
 EXPOSE $PORT
-VOLUME $P4HOME
+VOLUME $P4ROOT
+VOLUME /config
 
-ENTRYPOINT \
-    init.sh && \
-    /usr/bin/tail -F $P4ROOT/logs/log
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 HEALTHCHECK \
     --interval=2m \
