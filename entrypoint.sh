@@ -35,4 +35,4 @@ else
 	/opt/perforce/sbin/configure-helix-p4d.sh "$NAME" -n -p "$P4PORT" -r "$P4ROOT" -u "$P4USER" -P "${P4PASSWD}" --case "$P4CASE" --unicode
 fi
 
-/usr/bin/tail -F $P4ROOT/logs/log
+exec /usr/bin/tail -F $P4ROOT/logs/log

@@ -11,6 +11,7 @@ ARG P4_VERSION=2024.2-2726408
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y wget gnupg2 && \
+    userdel -r ubuntu && \
     \
     wget -qO - https://package.perforce.com/perforce.pubkey | gpg --dearmor | tee /usr/share/keyrings/perforce.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/perforce.gpg] https://package.perforce.com/apt/ubuntu ${UBUNTU_VERSION} release" > /etc/apt/sources.list.d/perforce.list && \
@@ -51,7 +52,3 @@ VOLUME /config
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-HEALTHCHECK \
-    --interval=2m \
-    --timeout=10s \
-    CMD p4 info -s > /dev/null || exit 1
