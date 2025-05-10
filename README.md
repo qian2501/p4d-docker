@@ -10,15 +10,14 @@ docker build -t <tag> .
 Common options and their default values:
 
 ```sh
-NAME=perforce-server
-PORT=1666
-P4NAME=main
+SERVER_NAME=perforce-server
+CONFIG_PATH=/config
+P4ROOT=/p4
 P4PORT=1666
 P4USER=test
 P4PASSWD=password1234
 P4CASE=-C0
-P4CHARSET=utf8
-P4SSLDIR=/cert
+P4SSLDIR=
 ```
 
 Additionally you can set `PERFORCE_UID` or `PERFORCE_GID` to force the id of user or group `perforce`, whom runs the Perforce server.
@@ -27,7 +26,7 @@ Additionally you can set `PERFORCE_UID` or `PERFORCE_GID` to force the id of use
 > Please be noted that although the server survives over restarts (i.e. data are kept), but it may break if you change the options after the initial bootstrap (i.e. the very first run of the image, at when options are getting hard-coded to the Perforce Helix core server own configuration).
 
 ## Volumes
-Mount `/config` to preserve server configurations.  
+Mount `$CONFIG_PATH` to preserve server configurations.  
 Mount `$P4ROOT` for data storage.
 
 ## SSL setup
@@ -35,8 +34,10 @@ Generate some self-signed SSL certificates, and ensure `P4SSLDIR` is set to a di
 
 ```sh
 P4PORT=ssl:1666
-P4SSLDIR=/cert
+P4SSLDIR=/config/ssl
 ```
+
+Note that certificate files must have `600` permission and `$P4SSLDIR` must have `700` permission, p4d will reject them otherwise.
 
 ## Credits
 This repository is a fork of https://github.com/sourcegraph/helix-docker, which is heavily inspired by https://github.com/p4paul/helix-docker and https://github.com/ambakshi/docker-perforce.

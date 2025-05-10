@@ -1,6 +1,4 @@
 #!/bin/bash
-
-# Specify UID and GID
 if [ ! -z "${PERFORCE_UID}" ]; then
   	if [ ! "$(id -u perforce)" -eq "${PERFORCE_UID}" ]; then
 		usermod -o -u "${PERFORCE_UID}" perforce
@@ -13,26 +11,26 @@ if [ ! -z "${PERFORCE_GID}" ]; then
 	fi
 fi
 
-# Setup directories
-mkdir -p "$P4ROOT"
-
-if [ ! -d "/config" ]; then
-	mkdir -p "/config"
-fi
-
-if [ -z "$(ls -A /config)" ]; then
-    echo >&2 "First time installation, copying configuration from /etc/perforce to $P4ROOT/etc and relinking"
-    cp -r /etc/perforce/* "/config"
+if [ -z "$(ls -A "$CONFIG_PATH")" ]; then
+    echo >&2 "First time installation, copying default configuration..."
+    cp -r /etc/perforce/* "$CONFIG_PATH"
 fi
 
 rm -r /etc/perforce
-ln -s "/config" /etc/perforce
+ln -s "$CONFIG_PATH" /etc/perforce
 
 echo "Create empty or start existing server..."
-if p4dctl list 2>/dev/null | grep -q "$NAME"; then
-	p4dctl start $NAME
-else
-	/opt/perforce/sbin/configure-helix-p4d.sh "$NAME" -n -p "$P4PORT" -r "$P4ROOT" -u "$P4USER" -P "${P4PASSWD}" --case "$P4CASE" --unicode
+if ! p4dctl list 2>/dev/null | grep -q "$SERVER_NAME"; then
+	/opt/perforce/sbin/configure-helix-p4d.sh "$SERVER_NAME" -n -p "$P4PORT" -r "$P4ROOT" -u "$P4USER" -P "${P4PASSWD}" --case "$P4CASE" --unicode
 fi
+
+# P4SSLDIR is invisible to user perforce whom actually runs p4d
+if [ -n "$P4SSLDIR" ]; then
+    sed -i "s|P4SSLDIR[[:space:]]*=.*|P4SSLDIR  =     $P4SSLDIR|" "$CONFIG_PATH/p4dctl.conf.d/$SERVER_NAME.conf"
+else
+    sed -i "s|P4SSLDIR[[:space:]]*=.*|P4SSLDIR  =|" "$CONFIG_PATH/p4dctl.conf.d/$SERVER_NAME.conf"
+fi
+
+p4dctl start $SERVER_NAME
 
 exec /usr/bin/tail -F $P4ROOT/logs/log
